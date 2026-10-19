@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Planner browser checks</title>
+<pre id="results">RUNNING</pre><iframe title="Planner under test" style="width:1200px;height:1000px;border:0"></iframe>
+<script type="module">
+const frame=document.querySelector('iframe'),results=document.querySelector('#results');
+const checks=[];
+const assert=(condition,label)=>{if(!condition)throw Error(label);checks.push(label);};
+const load=()=>new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+try{
+ localStorage.removeItem('waterloo-degree-plan-v1');
+ let loaded=load();frame.src='/index.html';await loaded;
+ let doc=frame.contentDocument;
+ assert(doc.querySelectorAll('.breadth-grid .audit-card').length===4,'Four breadth cards render');
+ assert(doc.querySelector('#elective-summary').textContent.includes('Communication'),'Communication summary renders');
+ const add=(code,{status='planned',grade='',exclude=false}={})=>{
+  doc.querySelector('#add').click();const form=doc.querySelector('#course-form');
+  form.elements.code.value=code;form.elements.status.value=status;form.elements.grade.value=grade;
+  form.elements.excludeBreadthDepth.checked=exclude;form.requestSubmit();
+  assert(!doc.querySelector('#editor').open,`Course editor saves ${code}`);
+ };
+ add('SCI 206');
+ let science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
+ assert(science.filter(c=>c.querySelector('.audit-badge').textContent==='Covered in plan').length===1,'SCI 206 covers exactly one science slot');
+ assert(science.every(c=>c.querySelector('details').textContent.includes('SCI 206')),'SCI 206 is displayed as eligible in both science categories');
+ add('PHYS 121');
+ science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
+ assert(science.every(c=>c.querySelector('.audit-badge').textContent==='Covered in plan'),'Two science courses cover both science categories');
+ add('ENGL 109',{status:'completed'});add('ENGL 119',{status:'completed'});
+ assert(doc.querySelector('#communication-progress').textContent.includes('Add a grade'),'Missing List I grade is surfaced');
+ doc.querySelector('[data-edit="ENGL 109"]').click();doc.querySelector('#course-form').elements.grade.value='80';doc.querySelector('#course-form').requestSubmit();
+ assert(doc.querySelector('#communication-progress .audit-badge').textContent==='Completed','Grade entry verifies completed communication pair');
+ assert(doc.querySelector('#breadth-progress .audit-card .audit-units').textContent.startsWith('0.50'),'ENGL 109 is excluded from humanities while ENGL 119 counts');
+ add('PSYCH 101');add('PSYCH 207');add('PSYCH 307');
+ assert(doc.querySelector('#depth-progress .audit-badge').textContent==='Covered in plan','Projected 300-level depth renders');
+ doc.querySelector('[data-edit="PSYCH 307"]').click();doc.querySelector('#course-form').elements.excludeBreadthDepth.checked=true;doc.querySelector('#course-form').requestSubmit();
+ assert(doc.querySelector('#depth-progress .audit-badge').textContent==='Still needed','Content exclusion removes depth satisfaction');
+ loaded=load();frame.contentWindow.location.reload();await loaded;doc=frame.contentDocument;
+ assert(doc.querySelector('#communication-progress .audit-badge').textContent==='Completed','Grades and progress persist after reload');
+ doc.querySelector('[data-edit="PSYCH 307"]').click();assert(doc.querySelector('#course-form').elements.excludeBreadthDepth.checked,'Exclusion persists after reload');doc.querySelector('#close').click();
+ frame.style.width='390px';await new Promise(r=>setTimeout(r,100));
+ assert(doc.documentElement.scrollWidth<=frame.clientWidth+2,'Mobile layout has no horizontal page overflow');
+ assert(doc.querySelector('#breadth-progress').getBoundingClientRect().width<=390,'Mobile breadth cards fit viewport');
+ results.textContent='PASS\n'+checks.join('\n');
+}catch(error){results.textContent='FAIL\n'+error.stack;}
+</script></html>

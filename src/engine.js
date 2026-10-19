@@ -1,6 +1,12 @@
 import {core,mathA,engA} from './data.js';
+import {equivalentCourses} from './elective-data.js';
 export function normalize(code){return code.trim().toUpperCase().replace(/\s+/g,' ').replace(/^([A-Z]+)\s*(\d)/,'$1 $2');}
-export function unique(courses){return [...new Map(courses.map(c=>[normalize(c.code),{...c,code:normalize(c.code)}])).values()];}
+export function courseIdentity(code){const normalized=normalize(code);return equivalentCourses.find(group=>group.includes(normalized))?.[0]||normalized;}
+export function unique(courses){
+ const result=new Map(),rank={planned:0,current:1,completed:2};
+ for(const c of courses){const key=courseIdentity(c.code),previous=result.get(key);if(!previous||(rank[c.status]??0)>=(rank[previous.status]??0))result.set(key,{...c,code:normalize(c.code)});}
+ return [...result.values()];
+}
 const range=(c,lo,hi)=>{const m=/^CS (\d+)$/.exec(c);return !!m && +m[1]>=lo && +m[1]<=hi;};
 const upper=c=>range(c,340,398)||range(c,440,489);
 // Maximum bipartite matching prevents a broad elective slot from consuming a
@@ -32,7 +38,14 @@ export function validateState(value){
  if(!value||value.version!==1||typeof value.ai!=='boolean'||!Array.isArray(value.courses))throw Error('Unsupported plan file.');
  const validTerms=['1A','1B','WT1','2A','WT2','2B','WT3','3A','WT4','3B','WT5','4A','WT6','4B'];
  const codes=new Set();
- for(const c of value.courses){c.code=normalize(String(c.code));if(!/^[A-Z]{2,8} \d{3}[A-Z]?$/.test(c.code)||codes.has(c.code)||!validTerms.includes(c.term)||!['planned','current','completed'].includes(c.status)||!Number.isFinite(c.units)||c.units<=0||c.units>1)throw Error('Plan contains an invalid or duplicate course.');codes.add(c.code);}
+ for(const c of value.courses){
+  c.code=normalize(String(c.code));const identity=courseIdentity(c.code);
+  if(!/^[A-Z]{2,8} \d{3}[A-Z]?$/.test(c.code)||codes.has(identity)||!validTerms.includes(c.term)||!['planned','current','completed'].includes(c.status)||!Number.isFinite(c.units)||c.units<=0||c.units>1||!Number.isInteger(c.units*4))throw Error('Plan contains an invalid, duplicate, or known cross-listed course.');
+  if(c.grade!=null&&(!Number.isFinite(c.grade)||c.grade<0||c.grade>100))throw Error('Grades must be between 0 and 100.');
+  if(c.status==='completed'&&c.grade!=null&&c.grade<50)throw Error('Completed means credit earned. A failing grade cannot be marked completed.');
+  if(c.excludeBreadthDepth!=null&&typeof c.excludeBreadthDepth!=='boolean')throw Error('Invalid breadth/depth exclusion.');
+  codes.add(identity);
+ }
  if(value.courses.some(c=>c.code==='CS 136L'&&c.units!==0.25))throw Error('CS 136L must carry 0.25 units.');
  return value;
 }
