@@ -1,6 +1,6 @@
 import {sources,terms,catalog,initialState} from './data.js';
 import {evaluate,normalize,validateState} from './engine.js';
-import {setupTranscriptImport} from './transcript-view.js';
+import {setupTranscriptImport} from './transcript-view.js?v=grade-report-4';
 import {renderElectives} from './elective-view.js';
 import {communication1,communication2,depthChains} from './elective-data.js';
 const $=s=>document.querySelector(s),key='waterloo-degree-plan-v1';

@@ -4,7 +4,7 @@ A browser-local planner starting with BCS co-op, Fall 2025 entry, sequence 1, an
 
 ## Run
 
-Requires Python 3 for the local server and Node 22.13+ (or Node 24+) for dependency setup and tests. PDF.js is served locally from the pinned npm dependency; no API key is needed.
+Requires Node 22.13+ (or Node 24+) for the local server, dependency setup, and tests. The local server disables caching so edits appear on reload. PDF.js is served locally from the pinned npm dependency; no API key is needed.
 
 ```sh
 npm ci

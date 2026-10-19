@@ -73,6 +73,8 @@ try{
  doc.querySelector('[data-credit-row]').click();
  assert(doc.querySelectorAll('.transcript-table input[data-row]:checked').length===1&&!doc.querySelector('#apply-transcript').disabled,'Confirming earned credit enables course selection');
  doc.querySelector('[data-credit-row]').click();assert(doc.querySelector('#apply-transcript').disabled,'Removing credit confirmation prevents import');
+ doc.querySelector('[data-select-all]').click();assert(doc.querySelectorAll('input[data-row]:checked').length===1,'Select all confirms and selects only eligible grade-report courses');
+ doc.querySelector('[data-clear-selection]').click();assert(doc.querySelectorAll('input[data-row]:checked').length===0&&doc.querySelector('#apply-transcript').disabled,'Clear selection removes bulk credit confirmation');
  const invalid=new DataTransfer();invalid.items.add(new File(['not a PDF'],'invalid.pdf',{type:'application/pdf'}));
  doc.querySelector('#transcript-file').files=invalid.files;doc.querySelector('#transcript-file').dispatchEvent(new Event('change',{bubbles:true}));
  await waitFor(()=>doc.querySelector('#transcript-status').textContent.includes('not a PDF'),'Invalid PDF did not show an error');

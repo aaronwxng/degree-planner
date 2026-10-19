@@ -1,4 +1,4 @@
-import {textItemsToLines} from './transcript.js';
+import {textItemsToLines} from './transcript.js?v=grade-report-4';
 
 export async function extractTranscriptPdf(file){
  if(file.size>10*1024*1024)throw Error('Choose a PDF smaller than 10 MB.');

@@ -32,6 +32,27 @@ try{
  }
  console.log(result);
  if(!result.startsWith('PASS')){console.error(errors.slice(-1200));process.exitCode=1;}
+ if(result.startsWith('PASS')&&process.argv[2]){
+  // Optional private local PDF test: CDP sets a File input directly. The source
+  // document is not copied into the checkout, served over HTTP, or logged.
+  const {targetId:pdfTarget}=await call('Target.createTarget',{url:`http://127.0.0.1:${server.address().port}/index.html`});
+  const {sessionId:pdfSession}=await call('Target.attachToTarget',{targetId:pdfTarget,flatten:true});
+  const evaluate=async expression=>{const value=await call('Runtime.evaluate',{expression,returnByValue:true},pdfSession);if(value.exceptionDetails)throw Error('Private-PDF browser evaluation failed.');return value.result?.value;};
+  for(let i=0;i<100&&!await evaluate('!!document.querySelector(".term")');i++)await sleep(100);
+  await evaluate('document.querySelector("#open-transcript").click()');
+  const {root:documentRoot}=await call('DOM.getDocument',{},pdfSession);
+  const {nodeId}=await call('DOM.querySelector',{nodeId:documentRoot.nodeId,selector:'#transcript-file'},pdfSession);
+  await call('DOM.setFileInputFiles',{nodeId,files:[resolve(process.argv[2])]},pdfSession);
+  let count=0;
+  for(let i=0;i<150;i++){count=await evaluate('document.querySelectorAll("[data-credit-row]").length');if(count)break;await sleep(100);}
+  if(count!==10)throw Error(`Private PDF: expected 10 credit-confirmation controls; found ${count}.`);
+  await evaluate('document.querySelector("[data-select-all]").click()');
+  if(await evaluate('document.querySelector("#apply-transcript").disabled'))throw Error('Private PDF: import remains disabled after confirmation and selection.');
+  await evaluate('document.querySelector("#apply-transcript").click()');
+  const imported=await evaluate('JSON.parse(localStorage.getItem("waterloo-degree-plan-v1")).courses.filter(c=>c.source==="grade-report").length');
+  if(imported!==10)throw Error('Private PDF: selected records were not merged.');
+  console.log('PASS: private local PDF browser extraction, confirmation, selection, and import (10 courses). User browser data unchanged.');
+ }
 }finally{
  if(socket)socket.close();
  if(child&&child.exitCode===null){child.kill('SIGTERM');await Promise.race([new Promise(r=>child.once('exit',r)),sleep(3000)]);if(child.exitCode===null)child.kill('SIGKILL');}
