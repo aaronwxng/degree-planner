@@ -5,6 +5,10 @@ export const sources = {
   suggested: 'https://cs.uwaterloo.ca/sites/default/files/uploads/documents/scs-2022-2023-bcs.pdf',
   minor: 'https://uwaterloo.ca/math/undergraduate-studies/academics/customize-your-degree/plans-students-outside-mathematics',
   calendar: 'https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026',
+  breadth: 'https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026#/programs/SJPJkCAih',
+  communication: 'https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026#/programs/r1y1WO5ka',
+  chain102: 'https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026#/courses/HkQyFEQth',
+  chain201: 'https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026#/courses/ByzmkYV7tn',
 };
 export const terms = ['1A','1B','WT1','2A','WT2','2B','WT3','3A','WT4','3B','WT5','4A','WT6','4B'].map((name,i)=>({id:name,name,date:`${['Fall','Winter','Spring'][i%3]} ${2025+Math.floor((i+2)/3)}`,work:name.startsWith('WT')}));
 const group=(id,label,codes)=>({id,label,codes:codes.split(',')});
