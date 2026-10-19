@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluate,allocate,validateState} from '../src/engine.js';
+import {initialState,terms} from '../src/data.js';
+const cs=(...codes)=>codes.map(code=>({code,units:code==='CS 136L'?0.25:0.5,term:'4A',status:'planned'}));
+test('overlapping slots use maximum matching',()=>{const result=allocate([{accept:()=>true},{accept:c=>c==='CS 480'}],cs('CS 480','CS 486'));assert.equal(result.filter(r=>r.matched).length,2);});
+test('a duplicate course cannot satisfy multiple slots or award extra credit',()=>{const r=evaluate(cs('CS 480','CS 480'));assert.equal(r.units,0.5);assert.equal(r.rows.filter(r=>r.matched).length,1);});
+test('one ML course cannot fill AI List A; both permit one',()=>{assert.equal(evaluate(cs('CS 480')).list.length,0);assert.equal(evaluate(cs('CS 485')).list.length,0);assert.deepEqual(evaluate(cs('CS 480','CS 485')).list,['CS 480']);});
+test('AI requires engineering and math, not just four courses',()=>{assert.equal(evaluate(cs('CO 367','CO 456','CS 484','STAT 441')).listSatisfied,false);assert.equal(evaluate(cs('CO 367','CO 456','CS 484','ECE 423')).listSatisfied,true);});
+test('alternative cross-listed List A choices count once',()=>{assert.equal(evaluate(cs('ECE 380','SE 380','CS 479','AMATH 449','BIOL 487','SYDE 552')).list.length,3);});
+test('lab is a quarter unit, all starting courses are planned',()=>{const s=initialState();assert.ok(s.courses.every(c=>c.status==='planned'));assert.equal(evaluate(cs('CS 136L')).units,0.25);assert.equal(evaluate(s.courses.filter(c=>c.status==='completed')).units,0);});
+test('import rejects malformed, duplicate, and unsupported data',()=>{assert.throws(()=>validateState({}));const s=initialState();s.courses.push(s.courses[0]);assert.throws(()=>validateState(s));assert.doesNotThrow(()=>validateState(initialState()));});
+test('sequence 1 ends Winter 2030 with six work terms and eight study terms',()=>{assert.equal(terms.at(-1).date,'Winter 2030');assert.equal(terms.filter(t=>t.work).length,6);assert.equal(terms.filter(t=>!t.work).length,8);});
+test('import cannot inflate lab credit',()=>{const s=initialState();s.courses.find(c=>c.code==='CS 136L').units=0.5;assert.throws(()=>validateState(s));});
