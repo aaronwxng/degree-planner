@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "python3 -m http.server 5173 --bind 127.0.0.1",
     "test": "node --test",
-    "check": "node --check src/app.js && node --check src/engine.js && node --check src/electives.js && node --check src/elective-view.js && node --check src/elective-data.js",
+    "check": "node --check src/app.js && node --check src/engine.js && node --check src/electives.js && node --check src/elective-view.js && node --check src/elective-data.js && node --check src/transcript.js && node --check src/transcript-pdf.js && node --check src/transcript-view.js",
     "test:browser": "node scripts/browser-smoke.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299"
   }
 }

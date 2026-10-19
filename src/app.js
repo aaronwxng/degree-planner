@@ -1,5 +1,6 @@
 import {sources,terms,catalog,initialState} from './data.js';
 import {evaluate,normalize,validateState} from './engine.js';
+import {setupTranscriptImport} from './transcript-view.js';
 import {renderElectives} from './elective-view.js';
 import {communication1,communication2,depthChains} from './elective-data.js';
 const $=s=>document.querySelector(s),key='waterloo-degree-plan-v1';
@@ -36,4 +37,5 @@ $('#delete').onclick=()=>{state.courses=state.courses.filter(c=>c.code!==editing
 $('#ai').onchange=e=>{state.ai=e.target.checked;save();};$('#work').onchange=render;
 $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='waterloo-degree-plan.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('#import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>1000000)throw Error('Plan file is too large.');const next=validateState(JSON.parse(await file.text()));if(confirm('Replace this browser’s plan with the imported plan? Export first if you need a backup.')){state=next;save();}}catch(err){message(`Import failed: ${err.message}`);}e.target.value='';};
+setupTranscriptImport({getState:()=>state,applyState:next=>{state=next;save();}});
 render();
