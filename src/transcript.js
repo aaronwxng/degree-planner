@@ -10,7 +10,7 @@ export function termForDate(season,year){return terms.find(t=>t.date===`${season
 
 // Coordinates retain column order even when PDF internal text objects are out of
 // order. The input is text-content items, not rendered pixels; no OCR is attempted.
-export function textItemsToLines(items){
+export function textItemsToLines(items,{preserveColumns=false}={}){
  const rows=[];
  for(const item of items){
   if(!item.str?.trim()||!Array.isArray(item.transform))continue;
@@ -18,12 +18,13 @@ export function textItemsToLines(items){
   let row=rows.find(r=>Math.abs(r.y-y)<=2);if(!row){row={y,items:[]};rows.push(row);}
   row.items.push({x,text:item.str.trim()});
  }
- return rows.sort((a,b)=>b.y-a.y).map(row=>row.items.sort((a,b)=>a.x-b.x).map(item=>item.text).join(' '));
+ return rows.sort((a,b)=>b.y-a.y).map(row=>row.items.sort((a,b)=>a.x-b.x).map(item=>item.text).join(preserveColumns?'\t':' '));
 }
 
 export function parseTranscript(text){
  if(typeof text!=='string'||text.length>1_000_000)throw Error('Transcript text is too large.');
  const lines=text.replace(/\u00a0/g,' ').split(/\r?\n/).map(line=>line.trim()).filter(Boolean);
+ const gradeReport=lines.some(line=>/^UNOFFICIAL\s+GRADE\s+REPORT$/i.test(line));
  const rows=[];let term='',termLabel='',transfer=false,headers=false,unreadable=0;
  for(let i=0;i<lines.length;i++){
   const line=lines[i];
@@ -37,6 +38,26 @@ export function parseTranscript(text){
   const match=/^([A-Z]{2,8})\s*(\d{1,3}[A-Z]?)\b\s*(.*)$/.exec(line);
   if(!match)continue;
   const code=normalize(`${match[1]} ${match[2]}`),tail=match[3].trim().split(/\s+/);
+  if(gradeReport){
+   // A grade report has no earned-unit evidence. Preserve PDF cell boundaries so
+   // course-title numbers cannot be mistaken for grades, and require user credit
+   // confirmation rather than silently assigning completion from a numeric grade.
+   const cells=line.split(/\t+| {2,}/).map(c=>c.trim()).filter(Boolean);
+   const last=cells.at(-1)||'',token=cells.length>=3&&gradePattern.test(last)?last:'';
+   const grade=token?numericGrade(token):null,gradeCode=grade===null?token:'';
+   const administrative=adminSubjects.has(match[1])||match[2].length<3;
+   const canConfirmCredit=!administrative&&!transfer&&(grade!==null&&grade>=50&&grade<=100||gradeCode==='CR');
+   const issues=['This grade report contains no attempted or earned units. Confirm earned credit and the suggested units before importing.'];
+   if(!token)issues.push('No separate grade cell was found; this row is not imported.');
+   else if(!canConfirmCredit&&!administrative)issues.push('This grade does not establish passing credit.');
+   if(administrative)issues.push('Readiness, PD, co-op and administrative entries are not supported as degree courses.');
+   if(transfer)issues.push('Transfer credit requires manual equivalency review.');
+   if(!term)issues.push('Choose a planner term.');
+   rows.push({id:`row-${rows.length}`,code,term,termLabel,attempted:null,earned:null,units:code==='CS 136L'?0.25:0.5,
+    grade,gradeCode,status:canConfirmCredit?'completed':'',eligible:false,transfer,reviewRequired:true,
+    gradeReport:true,canConfirmCredit,creditConfirmed:false,issues});
+   continue;
+  }
   const issues=[];let attempted=null,earned=null,gradeToken='',reviewRequired=false;
   // Find adjacent unit columns, allowing "0.50 / 0.50" as well as "0.50 0.50".
   const tokens=tail.filter(token=>token!=='/');
@@ -66,7 +87,7 @@ export function parseTranscript(text){
  }
  const counts=new Map();for(const row of rows)counts.set(courseIdentity(row.code),(counts.get(courseIdentity(row.code))||0)+1);
  for(const row of rows)if(counts.get(courseIdentity(row.code))>1){row.repeated=true;row.issues.push('Repeated or cross-listed course: select at most one attempt.');}
- return {rows,unreadable};
+ return {rows,unreadable,gradeReport};
 }
 
 export function prepareTranscriptReview(parsed,state){
@@ -84,11 +105,13 @@ export function mergeTranscript(state,rows){
  const courses=state.courses.map(c=>({...c})),seen=new Set();
  for(const row of selected){
   if(!row.eligible||row.transfer||!['completed','current'].includes(row.status))throw Error(`Review ${row.code}: this row cannot be imported automatically.`);
+  if(row.gradeReport&&(!row.canConfirmCredit||!row.creditConfirmed))throw Error(`Confirm earned credit and units for ${row.code} first.`);
   const identity=courseIdentity(row.code);if(seen.has(identity))throw Error(`Select only one attempt of ${row.code}.`);seen.add(identity);
   const index=courses.findIndex(c=>courseIdentity(c.code)===identity),existing=index<0?null:courses[index];
   if(existing?.status==='completed'&&row.status!=='completed')throw Error(`Cannot replace completed ${existing.code} with an in-progress attempt.`);
   const course={...existing,code:existing?.code||row.code,term:row.term,status:row.status,units:row.units,grade:row.grade,
-   transcriptGrade:row.gradeCode||String(row.grade),transcriptTerm:row.termLabel,source:'transcript'};
+   transcriptGrade:row.gradeCode||String(row.grade),transcriptTerm:row.termLabel,source:row.gradeReport?'grade-report':'transcript',
+   ...(row.gradeReport?{creditEvidence:'user-confirmed'}:{})};
   if(index<0)courses.push(course);else courses[index]=course;
  }
  return validateState({...state,courses});

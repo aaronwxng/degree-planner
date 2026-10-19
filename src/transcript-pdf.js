@@ -12,7 +12,7 @@ export async function extractTranscriptPdf(file){
   if(pdf.numPages>50)throw Error('This PDF has more than 50 pages. Choose the unofficial transcript only.');
   const lines=[];
   for(let n=1;n<=pdf.numPages;n++){
-   const page=await pdf.getPage(n);const text=await page.getTextContent();lines.push(...textItemsToLines(text.items));page.cleanup();
+   const page=await pdf.getPage(n);const text=await page.getTextContent();lines.push(...textItemsToLines(text.items,{preserveColumns:true}));page.cleanup();
    if(lines.join('\n').length>1_000_000)throw Error('Transcript text is too large.');
   }
   const text=lines.join('\n');if(!text.trim())throw Error('No selectable text was found. Scanned PDFs need OCR; paste transcript text instead.');

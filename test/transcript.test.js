@@ -76,3 +76,18 @@ test('decimal grades and grade points do not become extra unit columns',()=>{
 test('additional grade annotations require explicit review rather than automatic selection',()=>{
  const row=review(text('CS 135 Course 0.50 0.50 88 EXC'))[0];assert.ok(row.reviewRequired);assert.equal(row.selected,false);
 });
+test('grade reports expose grades but require confirmation because earned units are absent',()=>{
+ const rows=review('UNOFFICIAL GRADE REPORT\nFall 2025\nCS\t135\tFunctional Programs\t87\nCS\t136L\tTools\tCR');
+ assert.equal(rows[0].grade,87);assert.equal(rows[0].attempted,null);assert.equal(rows[0].earned,null);assert.equal(rows[0].units,0.5);
+ assert.ok(rows.every(r=>r.canConfirmCredit&&!r.selected&&!r.eligible));
+ rows[0].selected=true;rows[0].eligible=true;assert.throws(()=>mergeTranscript(initialState(),rows),/Confirm earned/);
+ rows[0].creditConfirmed=true;const next=mergeTranscript(initialState(),rows);assert.equal(next.courses.find(c=>c.code==='CS 135').creditEvidence,'user-confirmed');
+ assert.equal(rows[1].units,0.25);
+});
+test('ungraded grade-report rows and numeric course titles do not establish completion',()=>{
+ const rows=review('UNOFFICIAL GRADE REPORT\nFall 2026\nMATH\t237\tCalculus 3\nECON\t201\tMicroeconomics\nSEQ\t1\tCo-op Sequence 1\nPD\t11\tReport Writing\tCR');
+ assert.ok(rows.every(r=>!r.canConfirmCredit&&!r.selected));assert.equal(rows[0].grade,null);
+});
+test('grade-report failures and creditless codes cannot be confirmed as earned credit',()=>{
+ for(const token of ['WD','WF','NCR','INC','IP','49'])assert.equal(review(`UNOFFICIAL GRADE REPORT\nFall 2025\nCS\t135\tFunctional Programs\t${token}`)[0].canConfirmCredit,false);
+});

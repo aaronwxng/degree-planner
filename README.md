@@ -26,7 +26,7 @@ PDF.js extracts selectable PDF text entirely in the browser, using the local wor
 
 The parser supports labelled **Attempted / Earned / Grade** columns in that order, with optional numeric grade points. Completion requires positive earned units plus a passing numeric grade or CR; explicit IP with zero earned units may become in progress. Blank grades, conflicting credit, failures, withdrawals, incompletes, and unsupported grades do not become completed courses. Repeats, known cross-listings, completed-record updates, and extra notations require explicit review. Transfer credits and PD/administrative rows are left for manual handling. Dates outside this sequence require a manual planner-term mapping.
 
-**Validation limit:** this implementation has been tested with synthetic text and a synthetic PDF, not a real current Quest transcript. A redacted sample is still needed to validate actual layout coverage. Unknown layouts are rejected rather than guessed. Scanned and password-protected PDFs are unsupported; there is no OCR. Files are limited to 10 MB and 50 pages.
+**Validation:** the grade-report layout has been checked locally against a user-provided PDF; no personal data or source PDF is committed. Full transcripts with unit columns are tested against synthetic fixtures; additional real transcript layouts still need validation. Grade reports without unit columns require explicit earned-credit and units confirmation per course. Suggested units (normally 0.50; CS 136L 0.25) are not extracted evidence. Unknown layouts are rejected rather than guessed. Scanned and password-protected PDFs are unsupported; there is no OCR. Files are limited to 10 MB and 50 pages.
 
 ## Requirement coverage
 

@@ -21,4 +21,6 @@ Unsupported layouts, missing units or grades, ambiguous unit sequences, transfer
 
 Pure tests cover the parser, term mapping, grade/credit consistency, unsupported rows, repeats, protected completed records, immutable merging and plan preservation. The headless Chrome smoke test selects a real synthetic PDF File through the upload input and checks extraction and review, then exercises cancellation, paste import, merging, sensitive-text disposal and mobile layout. Regenerate the fixture with `node scripts/make-transcript-fixture.mjs`.
 
-A current redacted Quest transcript has not yet been supplied. Layout support must be validated against real examples before claiming broad Quest-format compatibility.
+A user-provided **Unofficial Grade Report** was inspected locally to validate its distinct format: it has separate course/description/grade cells and no attempted or earned-unit columns. PDF extraction now preserves cell boundaries, so a number at the end of a course title cannot become a grade. Grade-report passing rows are unselected until the user confirms earned credit and verifies suggested units. Blank grades and administrative entries remain unavailable. Confirmed records retain `source: "grade-report"` and `creditEvidence: "user-confirmed"`.
+
+The private PDF and extracted grades/text are never copied into repository fixtures. An isolated in-memory merge was checked without changing the user's browser plan. Unit-bearing transcript layouts still have synthetic-fixture validation only; broader real-world layout support needs additional examples.

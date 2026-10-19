@@ -66,6 +66,13 @@ try{
  assert(!JSON.stringify(imported).includes('Private Name'),'Raw transcript identity text is not persisted');
  assert(doc.querySelector('#transcript-text').value==='','Closing import clears raw pasted text');
  doc.querySelector('#open-transcript').click();
+ doc.querySelector('#transcript-text').value='UNOFFICIAL GRADE REPORT\nFall 2025\nSCI\t206\tPhysics of How Things Work\tCR\nMATH\t237\tCalculus 3';
+ doc.querySelector('#parse-transcript').click();
+ assert(doc.querySelectorAll('[data-credit-row]').length===1,'Grade reports expose confirmation only for passing records');
+ assert(doc.querySelectorAll('.transcript-table input[data-row]:checked').length===0,'Grade report never assumes earned credit from grades alone');
+ doc.querySelector('[data-credit-row]').click();
+ assert(doc.querySelectorAll('.transcript-table input[data-row]:checked').length===1&&!doc.querySelector('#apply-transcript').disabled,'Confirming earned credit enables course selection');
+ doc.querySelector('[data-credit-row]').click();assert(doc.querySelector('#apply-transcript').disabled,'Removing credit confirmation prevents import');
  const invalid=new DataTransfer();invalid.items.add(new File(['not a PDF'],'invalid.pdf',{type:'application/pdf'}));
  doc.querySelector('#transcript-file').files=invalid.files;doc.querySelector('#transcript-file').dispatchEvent(new Event('change',{bubbles:true}));
  await waitFor(()=>doc.querySelector('#transcript-status').textContent.includes('not a PDF'),'Invalid PDF did not show an error');
