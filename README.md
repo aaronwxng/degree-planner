@@ -28,9 +28,19 @@ The parser supports labelled **Attempted / Earned / Grade** columns in that orde
 
 **Validation:** the grade-report layout has been checked locally against a user-provided PDF; no personal data or source PDF is committed. Full transcripts with unit columns are tested against synthetic fixtures; additional real transcript layouts still need validation. Grade reports without unit columns require explicit earned-credit and units confirmation per course. Suggested units (normally 0.50; CS 136L 0.25) are not extracted evidence. Unknown layouts are rejected rather than guessed. Scanned and password-protected PDFs are unsupported; there is no OCR. Files are limited to 10 MB and 50 pages.
 
+## Graduation audit · Draft 04
+
+The degree progress section now gives each check a **Satisfied**, **Missing**, or **Needs review** status with a direct 2025–26 calendar source. It covers 20.0 degree units, 11.25 math units, 5.0 non-math units, required-course allocation, breadth/depth/communication, CAV/MAV, attempt limits, eight full-time terms, five credited work terms (at least three standard), and five PD courses with required codes and timing.
+
+Use the audit's evidence panels to record prior attempts and CLC flags, confirm official full-time status, record credited work terms, and add PD courses. Academic and co-op requirements are kept separate: PD/COOP do not add degree units. Grade averages use recorded final attempts, including failures and repeat grades, weighted by units; they never use future predicted grades. A grade report or partial import alone does not prove complete history.
+
+The course editor supports math/non-math/excluded classification, explicit CR/AEG grade codes, and approved transfer credit. Automatic non-math classification follows subject-code definitions and reviewed alias examples; users must review cross-listings and eligibility. Transfer credits count only after approval and do not enter Waterloo averages. Edits/imports clear affected review confirmations. Earlier v1 plan exports still load; all audit evidence is optional and defaults to unresolved.
+
+See [the audit source and interpretation review](docs/2025-26-graduation-audit.md). This is a record-based planner for BCS co-op sequence 1, not an official graduation decision or an academic-standing simulator. Advisor exceptions, unreviewed equivalencies, and records outside the profile's timeline need review.
+
 ## Requirement coverage
 
-Sources and links live in `src/data.js` and the app. Rules are transcribed from the official School of Computer Science **2025–26 checklists**, reviewed October 19, 2026. Breadth, depth thresholds, and communication rules are now verified against the archived 2025–26 calendar; see [the source review](docs/2025-26-elective-rules.md). The other course checks have not yet been fully reconciled with the calendar, which takes precedence. This is a partial course checker, not a full graduation audit or automatic course scheduler.
+Sources and links live in `src/data.js` and the app. Rules are transcribed from the official School of Computer Science **2025–26 checklists**, reviewed October 19, 2026. Breadth, depth thresholds, and communication rules are now verified against the archived 2025–26 calendar; see [the source review](docs/2025-26-elective-rules.md). Draft 04 reconciles BCS degree thresholds, required enriched-course alternatives, and the audit policies listed in its source review. AI course choices still use the School checklist. The calendar takes precedence; this is an evidence-based planning audit, not an official graduation decision or automatic scheduler.
 
 - BCS required course alternatives and distinct upper-year elective allocation.
 - AI required courses, four List A choices, Math/Engineering mix, paired alternatives, and CS 480/485 exclusion rule.
@@ -41,10 +51,10 @@ Sources and links live in `src/data.js` and the app. Rules are transcribed from 
 - Earned versus projected unique-course unit totals. In-progress courses count only toward projections.
 - Official sequence 1 study/work timeline through Winter 2030. Starter course placement is a suggestion based on the linked CS sequencing guide; prerequisites and offerings are not checked.
 
-Remaining limits: course-specific content exceptions, unknown subjects and unreviewed prerequisite chains, complete non-math classification, averages, failed/repeated attempts, transfer credit, all cross-listed equivalencies, full-time residency, PD/work-term completion, minor eligibility, and future course availability. The general Mathematics minor is shown as unresolved rather than assumed compatible with BCS. Other programs and calendar years are not yet implemented.
+Remaining limits: unreviewed course-content exceptions and cross-listings, unreviewed prerequisite chains, transfer-credit approvals, historical records outside the profile timeline, advisor exceptions, minor eligibility, and future course availability. Full-time, work-term and PD completion depend on the evidence entered in the audit. The general Mathematics minor is shown as unresolved rather than assumed compatible with BCS. Other programs and calendar years are not yet implemented.
 
 ## Structure
 
 `src/data.js`: version-specific source data and profile. `src/engine.js`: pure requirement evaluation and import validation. `src/elective-data.js`: pinned subject/communication/chain data. `src/electives.js`: elective unit allocation and rules. `src/elective-view.js`: progress display. `src/app.js`: UI/persistence. `test/engine.test.js`: allocation, double-counting, AI rules, import, and sequence regression checks.
 
-Next milestones: reconcile the archived calendar; add a complete course catalog and prerequisites; verify minor compatibility; expand prerequisite-chain and course-content coverage; expand coverage with separate reviewed program/year datasets. Never silently substitute newer calendar requirements.
+Next milestones: add a complete course catalog and prerequisites; verify minor compatibility; expand prerequisite-chain and course-content coverage; expand coverage with separate reviewed program/year datasets. Never silently substitute newer calendar requirements.

@@ -14,7 +14,8 @@ export const terms = ['1A','1B','WT1','2A','WT2','2B','WT3','3A','WT4','3B','WT5
 const group=(id,label,codes)=>({id,label,codes:codes.split(',')});
 export const core = [
  group('cs1','Introductory CS I','CS 115,CS 135,CS 145'),group('cs2','Introductory CS II','CS 136,CS 146'),
- ...['CS 136L','CS 240','CS 241','CS 245','CS 246','CS 251','CS 341','CS 350'].map(c=>group(c,c,c)),
+ ...['CS 136L','CS 341','CS 350'].map(c=>group(c,c,c)),
+ ...['CS 240','CS 241','CS 245','CS 246','CS 251'].map(c=>group(c,c+' / enriched',c+','+c+'E')),
  group('alg','Algebra','MATH 135,MATH 145'),group('lin','Linear algebra','MATH 136,MATH 146'),
  group('cal1','Calculus I','MATH 127,MATH 137,MATH 147'),group('cal2','Calculus II','MATH 128,MATH 138,MATH 148'),
  group('comb','Combinatorics','MATH 239,MATH 249'),group('prob','Probability','STAT 230,STAT 240'),group('stat','Statistics','STAT 231,STAT 241'),

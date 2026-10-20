@@ -1,5 +1,6 @@
 import {normalize,courseIdentity,validateState} from './engine.js';
 import {terms} from './data.js';
+import {gradeCode as recordedGradeCode} from './credit.js';
 
 const nonCredit=new Set(['WD','WF','NCR','INC','IP','FTC','DNW','NMR','NG','AEG','AUD','UR']);
 const adminSubjects=new Set(['PD','COOP','WKRPT','SEQ']);
@@ -102,17 +103,19 @@ export function prepareTranscriptReview(parsed,state){
 
 export function mergeTranscript(state,rows){
  const selected=rows.filter(row=>row.selected);if(!selected.length)throw Error('Select at least one supported course to import.');
- const courses=state.courses.map(c=>({...c})),seen=new Set();
+ const courses=state.courses.map(c=>({...c})),seen=new Set(),history=[...(state.attemptHistory||[])];
  for(const row of selected){
   if(!row.eligible||row.transfer||!['completed','current'].includes(row.status))throw Error(`Review ${row.code}: this row cannot be imported automatically.`);
   if(row.gradeReport&&(!row.canConfirmCredit||!row.creditConfirmed))throw Error(`Confirm earned credit and units for ${row.code} first.`);
   const identity=courseIdentity(row.code);if(seen.has(identity))throw Error(`Select only one attempt of ${row.code}.`);seen.add(identity);
   const index=courses.findIndex(c=>courseIdentity(c.code)===identity),existing=index<0?null:courses[index];
   if(existing?.status==='completed'&&row.status!=='completed')throw Error(`Cannot replace completed ${existing.code} with an in-progress attempt.`);
+  if(existing?.status==='completed'&&existing.term!==row.term&&!history.some(a=>courseIdentity(a.code)===identity&&a.term===existing.term))history.push({code:existing.code,term:existing.term,units:existing.units,grade:existing.grade??null,gradeCode:recordedGradeCode(existing),clc:false,unresolved:existing.grade==null&&!recordedGradeCode(existing)});
   const course={...existing,code:existing?.code||row.code,term:row.term,status:row.status,units:row.units,grade:row.grade,
    transcriptGrade:row.gradeCode||String(row.grade),transcriptTerm:row.termLabel,source:row.gradeReport?'grade-report':'transcript',
    ...(row.gradeReport?{creditEvidence:'user-confirmed'}:{})};
   if(index<0)courses.push(course);else courses[index]=course;
  }
- return validateState({...state,courses});
+ const currentKeys=new Set(courses.filter(c=>c.status==='completed').map(c=>`${courseIdentity(c.code)}|${c.term}`));
+ return validateState({...state,courses,attemptHistory:history.filter(a=>!currentKeys.has(`${courseIdentity(a.code)}|${a.term}`)),audit:{...state.audit,historyReviewed:false,classificationsReviewed:false,contentReviewed:false}});
 }
