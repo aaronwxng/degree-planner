@@ -43,6 +43,14 @@ try{
  science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
  assert(science.every(c=>c.querySelector('.audit-badge').textContent==='Covered in plan'),'Two science courses cover both science categories');
  add('ENGL 109',{status:'completed'});add('ENGL 119',{status:'completed'});
+ const firstTerm=doc.querySelector('[data-edit="ENGL 109"]').closest('.term');
+ const firstTermCourses=JSON.parse(localStorage.getItem('waterloo-degree-plan-v1')).courses.filter(c=>c.term==='1A');
+ assert(firstTerm.querySelector('dd').textContent===firstTermCourses.filter(c=>c.status==='completed').reduce((sum,c)=>sum+c.units,0).toFixed(2),'Term summaries separate completed units from planned units');
+ assert(doc.querySelector('.empty-term'),'Empty study terms explain how to get started');
+ doc.querySelector('#course-search').value='ENGL109';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
+ assert(doc.querySelector('.term-summary small').textContent.startsWith(`${firstTermCourses.length} courses`),'Term totals continue to show the full workload while filtering');
+ doc.querySelector('#clear-filters').click();
+
  assert(doc.querySelector('#communication-progress').textContent.includes('Add a grade'),'Missing List I grade is surfaced');
  doc.querySelector('[data-edit="ENGL 109"]').click();doc.querySelector('#course-form').elements.grade.value='80';doc.querySelector('#course-form').requestSubmit();
  assert(doc.querySelector('#communication-progress .audit-badge').textContent==='Completed','Grade entry verifies completed communication pair');
