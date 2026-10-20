@@ -1,3 +1,4 @@
+import {renderPrerequisites} from './prerequisite-view.js';
 import {renderAudit,setupAudit} from './audit-view.js';
 import {gradeCode} from './credit.js';
 import {sources,terms,catalog,initialState} from './data.js';
@@ -12,6 +13,7 @@ function message(s){$('#message').textContent=s;}
 try{const saved=localStorage.getItem(key);if(saved)state=validateState(JSON.parse(saved));}catch{message('Saved plan could not be loaded. Starting suggestion shown; export before making changes if you need a backup.');}
 function save(previous=null){undoRemoval=previous;$('#undo-removal').hidden=!undoRemoval;try{localStorage.setItem(key,JSON.stringify(state));message('Plan saved in this browser.');}catch{message('Browser storage is unavailable. Export your plan to save it.');}render();}
 function render(){
+ renderPrerequisites(state);
  renderAudit(state);
  renderElectives(document,state.courses,state.ai);
  const completed=evaluate(state.courses.filter(c=>c.status==='completed'),state.ai),projected=evaluate(state.courses,state.ai);

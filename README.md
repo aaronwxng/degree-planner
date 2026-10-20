@@ -58,3 +58,7 @@ Remaining limits: unreviewed course-content exceptions and cross-listings, unrev
 `src/data.js`: version-specific source data and profile. `src/engine.js`: pure requirement evaluation and import validation. `src/elective-data.js`: pinned subject/communication/chain data. `src/electives.js`: elective unit allocation and rules. `src/elective-view.js`: progress display. `src/app.js`: UI/persistence. `test/engine.test.js`: allocation, double-counting, AI rules, import, and sequence regression checks.
 
 Next milestones: add a complete course catalog and prerequisites; verify minor compatibility; expand prerequisite-chain and course-content coverage; expand coverage with separate reviewed program/year datasets. Never silently substitute newer calendar requirements.
+
+### Prerequisite planning checks
+
+Open **Check course prerequisites** above the course filters for direct timing, grade, corequisite and antirequisite checks on 21 reviewed CS/Math/STAT courses. Courses outside coverage are marked **Not checked**; future prerequisites are conditional on passing. Each reviewed course links to its archived requirements. See [coverage, interpretation and limits](docs/prerequisite-checks.md).

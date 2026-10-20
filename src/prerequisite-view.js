@@ -1,0 +1,9 @@
+import {evaluatePrerequisites} from './prerequisites.js';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function renderPrerequisites(state){
+ const panel=document.querySelector('#prerequisite-checks'),wasOpen=panel.open;
+ const rows=evaluatePrerequisites(state),reviewed=rows.filter(r=>r.status!=='unreviewed');
+ const count=status=>rows.filter(r=>r.status===status).length;
+ panel.innerHTML=`<summary>Check course prerequisites <span>${count('missing')} plan issues · ${count('review')} need review · ${rows.length-reviewed.length} not checked</span></summary><p class="hint">Direct course and grade checks for ${reviewed.length} of ${rows.length} courses, using 2025–26 calendar records and this BCS profile. Planned or in-progress prerequisites are conditional on passing with the required grade. Program enrolment, standing, admission equivalents, overrides, current registration rules and course offerings need separate review. This is not registration approval; a prerequisite’s own issues are listed separately.</p><div class="prerequisite-list">${rows.map(r=>`<article class="prerequisite-row"><div><strong>${esc(r.code)} · ${esc(r.term)}</strong><span class="prerequisite-status ${r.status}">${esc(r.label)}</span></div><ul>${(r.checks?.map(c=>`${({met:'Recorded',projected:'Planned',review:'Review',missing:'Missing or conflicting'})[c.status]} · ${c.text}`)||r.notes).map(note=>`<li>${esc(note)}</li>`).join('')||'<li>No university-course prerequisites listed in this reviewed record.</li>'}</ul>${r.source?`<a href="${r.source}" target="_blank" rel="noopener">Official course requirements ↗</a>`:'<a href="https://uwaterloo.ca/academic-calendar/undergraduate-studies/catalog/archive/2025-2026" target="_blank" rel="noopener">Open the official calendar ↗</a>'}</article>`).join('')}</div>`;
+ panel.open=wasOpen;
+}

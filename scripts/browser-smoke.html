@@ -17,6 +17,14 @@ try{
   form.elements.excludeBreadthDepth.checked=exclude;form.requestSubmit();
   assert(!doc.querySelector('#editor').open,`Course editor saves ${code}`);
  };
+ const prerequisites=doc.querySelector('#prerequisite-checks');prerequisites.open=true;
+ assert(prerequisites.querySelectorAll('.prerequisite-row').length===17,'Prerequisite checks cover every starter course');
+ assert(prerequisites.querySelector('summary').textContent.includes('0 plan issues'),'Starter placement has no missing direct prerequisite courses');
+ doc.querySelector('[data-edit="CS 350"]').click();doc.querySelector('#course-form').elements.term.value='1A';doc.querySelector('#course-form').requestSubmit();
+ assert(prerequisites.open&&prerequisites.querySelector('.prerequisite-status.missing'),'Moving a course too early flags a prerequisite issue and preserves panel state');
+ doc.querySelector('[data-edit="CS 350"]').click();doc.querySelector('#course-form').elements.term.value='3A';doc.querySelector('#course-form').requestSubmit();
+ assert(!prerequisites.querySelector('.prerequisite-status.missing'),'Moving the course back clears the direct prerequisite issue');
+ prerequisites.open=false;
  const originalStats=doc.querySelector('#stats').textContent;
  doc.querySelector('#course-search').value='cs135';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
  assert(doc.querySelectorAll('[data-edit]').length===1&&doc.querySelector('[data-edit="CS 135"]'),'Search tolerates missing spaces and case');
@@ -25,6 +33,7 @@ try{
  assert(doc.querySelectorAll('.term').length===0&&doc.querySelector('#filter-summary').textContent.startsWith('0 of'),'Combined filters explain empty results');
  doc.querySelector('#clear-filters').click();assert(doc.querySelectorAll('.term').length>0,'Clear filters restores the timeline');
  add('SCI 206');
+ assert(doc.querySelector('#prerequisite-checks .unreviewed'),'Courses outside reviewed coverage are explicitly not checked');
  const beforeRemoval=localStorage.getItem('waterloo-degree-plan-v1');
  doc.querySelector('[data-edit="SCI 206"]').click();doc.querySelector('#delete').click();
  assert(!doc.querySelector('[data-edit="SCI 206"]')&&!doc.querySelector('#undo-removal').hidden,'Deleting a course offers undo');
@@ -78,6 +87,7 @@ try{
  const auditSaved=JSON.parse(localStorage.getItem('waterloo-degree-plan-v1'));
  assert(auditSaved.audit.fullTimeTerms['1A']==='confirmed'&&auditSaved.audit.workTerms.WT1==='standard','Term evidence persists after reload');
  assert(doc.querySelector('#graduation-audit').textContent.includes('PD 1'),'PD evidence renders after reload');
+ doc.querySelector('#prerequisite-checks').open=true;
  frame.style.width='390px';await new Promise(r=>setTimeout(r,100));
  assert(doc.documentElement.scrollWidth<=frame.clientWidth+2,'Mobile layout has no horizontal page overflow');
  assert(doc.querySelector('#breadth-progress').getBoundingClientRect().width<=390,'Mobile breadth cards fit viewport');
