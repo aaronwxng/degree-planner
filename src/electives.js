@@ -1,6 +1,7 @@
 import {breadthCategories,communication1,communication2,depthChains} from './elective-data.js';
 import {unique,normalize} from './engine.js';
 import {engA,terms} from './data.js';
+import {usableCourse,creditType} from './credit.js';
 
 const subject=c=>c.code.split(' ')[0];
 const sum=cs=>cs.reduce((n,c)=>n+c.units,0);
@@ -43,9 +44,9 @@ function communication(courses,projected){
 }
 
 export function evaluateElectives(input,{ai=true,projected=true}={}){
- const courses=unique(input.filter(c=>projected||c.status==='completed'));
+ const courses=unique(input.filter(c=>usableCourse(c)&&(projected||c.status==='completed')));
  const excluded=courses.filter(c=>c.excludeBreadthDepth||ai&&engA.includes(c.code));
- const eligible=courses.filter(c=>knownSubject(c)&&!excluded.includes(c));
+ const eligible=courses.filter(c=>knownSubject(c)&&creditType(c)==='nonmath'&&!excluded.includes(c));
  const unknown=courses.filter(c=>!knownSubject(c)&&!['ACTSC','AMATH','CO','CS','MATBUS','MATH','PMATH','STAT','MTHEL','PD','COOP','WKRPT','SEQ','ECE','SE','MTE','SYDE'].includes(subject(c)));
  const grouped=Map.groupBy?Map.groupBy(eligible,subject):eligible.reduce((m,c)=>m.set(subject(c),[...(m.get(subject(c))||[]),c]),new Map());
  const depth=[...grouped].map(([name,cs])=>{
@@ -55,5 +56,5 @@ export function evaluateElectives(input,{ai=true,projected=true}={}){
    missingUnits:Math.max(0,1.5-units),needsUpper:upper<0.5&&!chain,chainNeedsReview:units>=1.5&&upper<0.5&&!chain};
  }).sort((a,b)=>Number(b.satisfied)-Number(a.satisfied)||b.units-a.units||a.subject.localeCompare(b.subject));
  return {breadth:allocateBreadth(eligible),depth,depthSatisfied:depth.some(d=>d.satisfied),communication:communication(courses.map(c=>({...c,code:commCode(c.code)})),projected),
-  nonMathUnits:sum(courses.filter(c=>knownSubject(c)&&!(ai&&engA.includes(c.code)))),excluded:excluded.map(c=>c.code),unknown:unknown.map(c=>normalize(c.code))};
+  nonMathUnits:sum(courses.filter(c=>creditType(c)==='nonmath'&&!(ai&&engA.includes(c.code)))),excluded:excluded.map(c=>c.code),unknown:unknown.map(c=>normalize(c.code))};
 }

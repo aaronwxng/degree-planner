@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "test": "node --test",
-    "check": "node --check src/app.js && node --check src/engine.js && node --check src/electives.js && node --check src/elective-view.js && node --check src/elective-data.js && node --check src/transcript.js && node --check src/transcript-pdf.js && node --check src/transcript-view.js",
+    "check": "node --check src/app.js && node --check src/engine.js && node --check src/electives.js && node --check src/elective-view.js && node --check src/elective-data.js && node --check src/transcript.js && node --check src/transcript-pdf.js && node --check src/transcript-view.js && node --check src/audit.js && node --check src/audit-view.js && node --check src/credit.js",
     "test:browser": "node scripts/browser-smoke.mjs"
   },
   "dependencies": {
