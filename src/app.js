@@ -7,10 +7,10 @@ import {renderElectives} from './elective-view.js';
 import {communication1,communication2,depthChains} from './elective-data.js';
 const $=s=>document.querySelector(s),key='waterloo-degree-plan-v1';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=initialState(),editing=null;
+let state=initialState(),editing=null,undoRemoval=null;
 function message(s){$('#message').textContent=s;}
 try{const saved=localStorage.getItem(key);if(saved)state=validateState(JSON.parse(saved));}catch{message('Saved plan could not be loaded. Starting suggestion shown; export before making changes if you need a backup.');}
-function save(){try{localStorage.setItem(key,JSON.stringify(state));message('Plan saved in this browser.');}catch{message('Browser storage is unavailable. Export your plan to save it.');}render();}
+function save(previous=null){undoRemoval=previous;$('#undo-removal').hidden=!undoRemoval;try{localStorage.setItem(key,JSON.stringify(state));message('Plan saved in this browser.');}catch{message('Browser storage is unavailable. Export your plan to save it.');}render();}
 function render(){
  renderAudit(state);
  renderElectives(document,state.courses,state.ai);
@@ -42,7 +42,8 @@ function openEditor(code=null,term='1A'){
 $('#add').onclick=()=>openEditor();$('#close').onclick=()=>$('#editor').close();
 $('#terms').onclick=e=>{const edit=e.target.closest('[data-edit]'),add=e.target.closest('[data-term]');if(edit)openEditor(edit.dataset.edit);if(add)openEditor(null,add.dataset.term);};
 form.onsubmit=e=>{e.preventDefault();const c={...state.courses.find(c=>c.code===editing),code:normalize(form.elements.code.value),term:form.elements.term.value,status:form.elements.status.value,units:+form.elements.units.value,grade:form.elements.grade.value===''?null:+form.elements.grade.value,excludeBreadthDepth:form.elements.excludeBreadthDepth.checked,gradeCode:form.elements.gradeCode.value,transcriptGrade:form.elements.grade.value||form.elements.gradeCode.value,creditType:form.elements.creditType.value,origin:form.elements.origin.value,transferApproved:form.elements.transferApproved.checked};if(c.code==='CS 136L'&&c.units!==0.25){$('#form-error').textContent='CS 136L carries 0.25 units.';return;}try{const next={...state,courses:[...state.courses.filter(c=>c.code!==editing),c],audit:{...state.audit,historyReviewed:false,classificationsReviewed:false,contentReviewed:false}};validateState(next);state=next;save();$('#editor').close();}catch(err){$('#form-error').textContent=err.message;}};
-$('#delete').onclick=()=>{state.courses=state.courses.filter(c=>c.code!==editing);state.audit={...state.audit,historyReviewed:false,classificationsReviewed:false,contentReviewed:false};save();$('#editor').close();};
+$('#delete').onclick=()=>{const previous=structuredClone(state);state.courses=state.courses.filter(c=>c.code!==editing);state.audit={...state.audit,historyReviewed:false,classificationsReviewed:false,contentReviewed:false};save(previous);$('#editor').close();};
+$('#undo-removal').onclick=()=>{if(!undoRemoval)return;state=undoRemoval;save();};
 $('#ai').onchange=e=>{state.ai=e.target.checked;state.audit={...state.audit,classificationsReviewed:false,contentReviewed:false};save();};$('#work').onchange=render;
 $('#course-search').oninput=render;$('#course-status').onchange=render;
 $('#clear-filters').onclick=()=>{$('#course-search').value='';$('#course-status').value='';render();};
