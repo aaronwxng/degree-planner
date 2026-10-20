@@ -17,6 +17,13 @@ try{
   form.elements.excludeBreadthDepth.checked=exclude;form.requestSubmit();
   assert(!doc.querySelector('#editor').open,`Course editor saves ${code}`);
  };
+ const originalStats=doc.querySelector('#stats').textContent;
+ doc.querySelector('#course-search').value='cs135';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
+ assert(doc.querySelectorAll('[data-edit]').length===1&&doc.querySelector('[data-edit="CS 135"]'),'Search tolerates missing spaces and case');
+ assert(doc.querySelector('#stats').textContent===originalStats,'Filtering does not alter degree totals');
+ doc.querySelector('#course-status').value='completed';doc.querySelector('#course-status').dispatchEvent(new Event('change'));
+ assert(doc.querySelectorAll('.term').length===0&&doc.querySelector('#filter-summary').textContent.startsWith('0 of'),'Combined filters explain empty results');
+ doc.querySelector('#clear-filters').click();assert(doc.querySelectorAll('.term').length>0,'Clear filters restores the timeline');
  add('SCI 206');
  let science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
  assert(science.filter(c=>c.querySelector('.audit-badge').textContent==='Covered in plan').length===1,'SCI 206 covers exactly one science slot');
