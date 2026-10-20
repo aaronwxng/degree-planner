@@ -25,6 +25,17 @@ try{
  assert(doc.querySelectorAll('.term').length===0&&doc.querySelector('#filter-summary').textContent.startsWith('0 of'),'Combined filters explain empty results');
  doc.querySelector('#clear-filters').click();assert(doc.querySelectorAll('.term').length>0,'Clear filters restores the timeline');
  add('SCI 206');
+ const beforeRemoval=localStorage.getItem('waterloo-degree-plan-v1');
+ doc.querySelector('[data-edit="SCI 206"]').click();doc.querySelector('#delete').click();
+ assert(!doc.querySelector('[data-edit="SCI 206"]')&&!doc.querySelector('#undo-removal').hidden,'Deleting a course offers undo');
+ doc.querySelector('#undo-removal').click();
+ assert(localStorage.getItem('waterloo-degree-plan-v1')===beforeRemoval&&doc.querySelector('[data-edit="SCI 206"]'),'Undo restores the entire saved record and audit evidence');
+ assert(doc.querySelector('#undo-removal').hidden,'Undo is consumed after restoring a removal');
+ doc.querySelector('[data-edit="SCI 206"]').click();doc.querySelector('#delete').click();
+ doc.querySelector('#ai').click();
+ assert(doc.querySelector('#undo-removal').hidden,'A subsequent plan change clears stale undo');
+ doc.querySelector('#ai').click();add('SCI 206');
+
  let science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
  assert(science.filter(c=>c.querySelector('.audit-badge').textContent==='Covered in plan').length===1,'SCI 206 covers exactly one science slot');
  assert(science.every(c=>c.querySelector('details').textContent.includes('SCI 206')),'SCI 206 is displayed as eligible in both science categories');
