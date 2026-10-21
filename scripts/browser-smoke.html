@@ -25,6 +25,11 @@ try{
  doc.querySelector('[data-edit="CS 350"]').click();doc.querySelector('#course-form').elements.term.value='3A';doc.querySelector('#course-form').requestSubmit();
  assert(!prerequisites.querySelector('.prerequisite-status.missing'),'Moving the course back clears the direct prerequisite issue');
  prerequisites.open=false;
+ const beforeMove=localStorage.getItem('waterloo-degree-plan-v1');
+ const move=doc.querySelector('[data-move="CS 350"]');move.value='1A';move.dispatchEvent(new Event('change',{bubbles:true}));
+ assert(JSON.parse(localStorage.getItem('waterloo-degree-plan-v1')).courses.find(c=>c.code==='CS 350').term==='1A','Quick move saves the destination term');
+ assert(prerequisites.querySelector('.missing')&&doc.querySelector('#undo-removal').textContent==='Undo move','Quick move updates prerequisite warnings and offers undo');
+ doc.querySelector('#undo-removal').click();assert(localStorage.getItem('waterloo-degree-plan-v1')===beforeMove,'Undo move restores the complete prior plan');
  const originalStats=doc.querySelector('#stats').textContent;
  doc.querySelector('#course-search').value='cs135';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
  assert(doc.querySelectorAll('[data-edit]').length===1&&doc.querySelector('[data-edit="CS 135"]'),'Search tolerates missing spaces and case');
@@ -52,6 +57,7 @@ try{
  science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
  assert(science.every(c=>c.querySelector('.audit-badge').textContent==='Covered in plan'),'Two science courses cover both science categories');
  add('ENGL 109',{status:'completed'});add('ENGL 119',{status:'completed'});
+ assert(!doc.querySelector('[data-move="ENGL 109"]'),'Completed records require the full editor rather than quick moves');
  const firstTerm=doc.querySelector('[data-edit="ENGL 109"]').closest('.term');
  const firstTermCourses=JSON.parse(localStorage.getItem('waterloo-degree-plan-v1')).courses.filter(c=>c.term==='1A');
  assert(firstTerm.querySelector('dd').textContent===firstTermCourses.filter(c=>c.status==='completed').reduce((sum,c)=>sum+c.units,0).toFixed(2),'Term summaries separate completed units from planned units');
