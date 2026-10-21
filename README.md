@@ -66,3 +66,13 @@ Open **Check course prerequisites** above the course filters for direct timing, 
 ### Planning shortcuts and printing
 
 Planned courses have a **Move** selector for changing terms directly, with **Undo move** available until your next saved edit. Use the course requirement filter to focus on unfinished or unplanned course slots. **Print plan / PDF** opens the browser print dialog with the full timeline, including work terms; choose Save as PDF for a shareable copy. Printing restores your search/status/work-term filters afterward and does not change your saved courses. JSON export remains the editable backup format.
+
+### Alternative plans
+
+Your existing browser plan loads as **Main plan**. Use **Duplicate plan** to create an independent scenario, then rename it, move courses, or change the AI specialization choice. The selected plan is the one edited by the planner, transcript importer, graduation audit and single-plan import/export. Completed records, prior attempts, PD records and audit evidence are copied when duplicating; later changes are not synchronized between scenarios.
+
+Open **Compare alternative plans** to compare eligible degree units, requirement coverage, added/removed/moved courses, changed records and scheduled workload for every term. Each plan uses its own specialization requirements. This comparison does not establish graduation or registration eligibility.
+
+Up to 12 named plans can be saved locally. **Export all plans** backs up every scenario and the active selection. The existing Import plan control accepts either a v1 single-plan file (replaces only the selected plan) or an all-plans backup (replaces the library after confirmation). Single-plan exports remain v1-compatible. Printing includes the selected plan's name.
+
+All plans live in this browser; clearing browser data removes them. If another tab changes saved scenarios, export any in-memory work before reloading to avoid overwriting the other tab. Invalid stored libraries are left untouched and can be downloaded for recovery. See [scenario storage and backup behavior](docs/alternative-plans.md).
