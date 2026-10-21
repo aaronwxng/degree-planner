@@ -30,6 +30,17 @@ try{
  assert(JSON.parse(localStorage.getItem('waterloo-degree-plan-v1')).courses.find(c=>c.code==='CS 350').term==='1A','Quick move saves the destination term');
  assert(prerequisites.querySelector('.missing')&&doc.querySelector('#undo-removal').textContent==='Undo move','Quick move updates prerequisite warnings and offers undo');
  doc.querySelector('#undo-removal').click();assert(localStorage.getItem('waterloo-degree-plan-v1')===beforeMove,'Undo move restores the complete prior plan');
+ const requirementsFilter=doc.querySelector('#requirement-filter');requirementsFilter.value='unplanned';requirementsFilter.dispatchEvent(new Event('change'));
+ assert([...doc.querySelectorAll('.requirement-result')].every(row=>row.textContent.includes('Not in your plan')),'Unplanned filter shows only missing course slots');
+ doc.querySelector('[data-plan-requirement]').click();assert(doc.querySelector('#editor').open&&doc.querySelector('#editor-title').textContent.startsWith('Plan for'),'Missing course slots open a contextual course editor');doc.querySelector('#close').click();
+ requirementsFilter.value='all';requirementsFilter.dispatchEvent(new Event('change'));
+ doc.querySelector('[data-edit="CS 135"]').click();doc.querySelector('#course-form').elements.status.value='completed';doc.querySelector('#course-form').requestSubmit();
+ assert([...doc.querySelectorAll('.requirement-result')].some(row=>row.textContent.includes('✓ Completed · CS 135')),'Recorded core credit appears as completed');
+ requirementsFilter.value='remaining';requirementsFilter.dispatchEvent(new Event('change'));
+ assert(![...doc.querySelectorAll('.requirement-result')].some(row=>row.textContent.includes('✓ Completed')),'Remaining filter hides actual completed core credit');
+ requirementsFilter.value='all';requirementsFilter.dispatchEvent(new Event('change'));
+ doc.querySelector('[data-edit="CS 135"]').click();doc.querySelector('#course-form').elements.status.value='planned';doc.querySelector('#course-form').requestSubmit();
+
  const originalStats=doc.querySelector('#stats').textContent;
  doc.querySelector('#course-search').value='cs135';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
  assert(doc.querySelectorAll('[data-edit]').length===1&&doc.querySelector('[data-edit="CS 135"]'),'Search tolerates missing spaces and case');
@@ -57,6 +68,9 @@ try{
  science=[...doc.querySelectorAll('#breadth-progress .audit-card')].slice(2);
  assert(science.every(c=>c.querySelector('.audit-badge').textContent==='Covered in plan'),'Two science courses cover both science categories');
  add('ENGL 109',{status:'completed'});add('ENGL 119',{status:'completed'});
+ doc.querySelector('#requirement-filter').value='remaining';doc.querySelector('#requirement-filter').dispatchEvent(new Event('change'));
+ assert(![...doc.querySelectorAll('.requirement-result')].some(row=>row.textContent.includes('✓ Completed')),'Remaining requirements filter excludes completed slots');
+ doc.querySelector('#requirement-filter').value='all';doc.querySelector('#requirement-filter').dispatchEvent(new Event('change'));
  assert(!doc.querySelector('[data-move="ENGL 109"]'),'Completed records require the full editor rather than quick moves');
  const firstTerm=doc.querySelector('[data-edit="ENGL 109"]').closest('.term');
  const firstTermCourses=JSON.parse(localStorage.getItem('waterloo-degree-plan-v1')).courses.filter(c=>c.term==='1A');
