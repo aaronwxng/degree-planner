@@ -41,6 +41,15 @@ try{
  requirementsFilter.value='all';requirementsFilter.dispatchEvent(new Event('change'));
  doc.querySelector('[data-edit="CS 135"]').click();doc.querySelector('#course-form').elements.status.value='planned';doc.querySelector('#course-form').requestSubmit();
 
+ const beforePrint=localStorage.getItem('waterloo-degree-plan-v1');
+ doc.querySelector('#course-search').value='CS135';doc.querySelector('#course-status').value='planned';doc.querySelector('#work').checked=false;
+ frame.contentWindow.dispatchEvent(new frame.contentWindow.Event('beforeprint'));
+ assert(doc.querySelectorAll('.term').length===14&&doc.querySelector('#print-date').textContent,'Print preparation includes every term and a preparation date');
+ frame.contentWindow.dispatchEvent(new frame.contentWindow.Event('beforeprint'));
+ frame.contentWindow.dispatchEvent(new frame.contentWindow.Event('afterprint'));
+ assert(doc.querySelector('#course-search').value==='CS135'&&doc.querySelector('#course-status').value==='planned'&&!doc.querySelector('#work').checked,'Finishing print restores filters, including after repeated print events');
+ assert(localStorage.getItem('waterloo-degree-plan-v1')===beforePrint,'Printing leaves the saved plan untouched');
+ doc.querySelector('#work').checked=true;doc.querySelector('#clear-filters').click();
  const originalStats=doc.querySelector('#stats').textContent;
  doc.querySelector('#course-search').value='cs135';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
  assert(doc.querySelectorAll('[data-edit]').length===1&&doc.querySelector('[data-edit="CS 135"]'),'Search tolerates missing spaces and case');

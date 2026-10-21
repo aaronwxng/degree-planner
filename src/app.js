@@ -1,3 +1,4 @@
+import {setupPrintPlan} from './print-plan.js';
 import {renderPrerequisites} from './prerequisite-view.js';
 import {renderAudit,setupAudit} from './audit-view.js';
 import {gradeCode} from './credit.js';
@@ -64,6 +65,7 @@ $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify
 $('#import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>1000000)throw Error('Plan file is too large.');const next=validateState(JSON.parse(await file.text()));if(confirm('Replace this browser’s plan with the imported plan? Export first if you need a backup.')){state=next;save();}}catch(err){message(`Import failed: ${err.message}`);}e.target.value='';};
 form.elements.grade.oninput=()=>{if(form.elements.grade.value!=='')form.elements.gradeCode.value='';};
 form.elements.gradeCode.onchange=()=>{if(form.elements.gradeCode.value)form.elements.grade.value='';};
+setupPrintPlan({render});
 setupAudit({getState:()=>state,applyState:next=>{state=next;save();}});
 setupTranscriptImport({getState:()=>state,applyState:next=>{state=next;save();}});
 render();
