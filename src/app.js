@@ -1,3 +1,5 @@
+import {setupScenarios} from './scenario-view.js';
+import {scenarioKey,legacyPlanKey,createScenarios,loadScenarios,persistScenarios,activeScenario,updateActiveScenario,validateScenarios} from './scenarios.js';
 import {setupPrintPlan} from './print-plan.js';
 import {renderPrerequisites} from './prerequisite-view.js';
 import {renderAudit,setupAudit} from './audit-view.js';
@@ -7,13 +9,31 @@ import {evaluate,normalize,validateState} from './engine.js';
 import {setupTranscriptImport} from './transcript-view.js?v=grade-report-4';
 import {renderElectives} from './elective-view.js';
 import {communication1,communication2,depthChains} from './elective-data.js';
-const $=s=>document.querySelector(s),key='waterloo-degree-plan-v1';
+const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=initialState(),editing=null,undoRemoval=null;
+let library=createScenarios(initialState()),state=initialState(),editing=null,undoRemoval=null,scenarioUI=null,storageLocked=false;
 function message(s){$('#message').textContent=s;}
-try{const saved=localStorage.getItem(key);if(saved)state=validateState(JSON.parse(saved));}catch{message('Saved plan could not be loaded. Starting suggestion shown; export before making changes if you need a backup.');}
-function save(previous=null,undoLabel='Undo removal'){undoRemoval=previous;$('#undo-removal').hidden=!undoRemoval;$('#undo-removal').textContent=undoLabel;try{localStorage.setItem(key,JSON.stringify(state));message('Plan saved in this browser.');}catch{message('Browser storage is unavailable. Export your plan to save it.');}render();}
+try{library=loadScenarios(localStorage,initialState());state=structuredClone(activeScenario(library).state);}catch{storageLocked=true;$('#export-recovery').hidden=false;message('Saved plans could not be loaded. Existing browser data has been left untouched. Download saved data for recovery. Edits here are temporary until a valid all-plans backup is imported.');}
+function writeLibrary(next){if(storageLocked)throw Error('Saved plans are unavailable or changed in another tab. Export your work, then reload or import a valid all-plans backup.');return persistScenarios(localStorage,next);}
+function save(previous=null,undoLabel='Undo removal'){
+ undoRemoval=previous;$('#undo-removal').hidden=!undoRemoval;$('#undo-removal').textContent=undoLabel;
+ library=updateActiveScenario(library,state);
+ try{library=writeLibrary(library);message(`${activeScenario(library).name} saved in this browser.`);}catch(err){message(`${err.message} Export your plans to keep the changes currently in memory.`);}
+ render();
+}
+function applyLibrary(next,allowRecovery=false){
+ const validated=validateScenarios(next),switching=validated.activeId!==library.activeId;
+ const stored=allowRecovery?persistScenarios(localStorage,validated):writeLibrary(validated);
+ library=stored;state=structuredClone(activeScenario(library).state);storageLocked=false;$('#export-recovery').hidden=true;
+ undoRemoval=null;$('#undo-removal').hidden=true;
+ if(switching){$('#course-search').value='';$('#course-status').value='';$('#requirement-filter').value='all';}
+ render();
+}
+window.addEventListener('storage',e=>{
+ if(e.key===scenarioKey||e.key===null){storageLocked=true;$('#export-recovery').hidden=false;message('Saved plans changed in another tab. Export any work you want to keep, then reload to use the latest saved plans.');}
+});
 function render(){
+ scenarioUI?.render();
  renderPrerequisites(state);
  renderAudit(state);
  renderElectives(document,state.courses,state.ai);
@@ -61,10 +81,29 @@ $('#requirement-filter').onchange=render;
 $('#requirements-content').onclick=e=>{const button=e.target.closest('[data-plan-requirement]');if(!button)return;openEditor();form.elements.code.value=button.dataset.suggestCode;form.elements.units.value=button.dataset.suggestCode==='CS 136L'?'0.25':'0.5';$('#editor-title').textContent=`Plan for ${button.dataset.planRequirement}`;};
 $('#course-search').oninput=render;$('#course-status').onchange=render;
 $('#clear-filters').onclick=()=>{$('#course-search').value='';$('#course-status').value='';render();};
-$('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=`waterloo-degree-plan-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-$('#import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>1000000)throw Error('Plan file is too large.');const next=validateState(JSON.parse(await file.text()));if(confirm('Replace this browser’s plan with the imported plan? Export first if you need a backup.')){state=next;save();}}catch(err){message(`Import failed: ${err.message}`);}e.target.value='';};
+function downloadJSON(value,filename){const url=URL.createObjectURL(new Blob([typeof value==='string'?value:JSON.stringify(value,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+const backupDate=()=>new Date().toISOString().replace(/[:.]/g,'-');
+$('#export').onclick=()=>downloadJSON(state,`waterloo-degree-plan-${backupDate()}.json`);
+$('#export-scenarios').onclick=()=>downloadJSON(updateActiveScenario(library,state),`waterloo-all-plans-${backupDate()}.json`);
+$('#export-recovery').onclick=()=>{try{const raw=localStorage.getItem(scenarioKey)??localStorage.getItem(legacyPlanKey);if(raw===null)throw Error('No saved data is accessible.');downloadJSON(raw,`waterloo-plan-recovery-${backupDate()}.json`);}catch(err){message(err.message);}};
+$('#import').onchange=async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  if(file.size>5000000)throw Error('Plan file is too large (maximum 5 MB).');
+  const parsed=JSON.parse(await file.text());
+  if(parsed?.kind==='waterloo-degree-scenarios'){
+   const next=validateScenarios(parsed);
+   if(confirm(`Replace all ${library.plans.length} saved plans with the ${next.plans.length} plans in this backup? Export all plans first if you need to keep them.`)){applyLibrary(next,true);message('All plans restored from backup.');}
+  }else{
+   const next=validateState(parsed);
+   if(storageLocked)throw Error('Reload or restore an all-plans backup before replacing a single plan.');
+   if(confirm(`Replace only “${activeScenario(library).name}” with the imported plan? Other saved plans will remain. Export first if you need a backup.`)){state=next;save();}
+  }
+ }catch(err){message(`Import failed: ${err.message}`);}e.target.value='';
+};
 form.elements.grade.oninput=()=>{if(form.elements.grade.value!=='')form.elements.gradeCode.value='';};
 form.elements.gradeCode.onchange=()=>{if(form.elements.gradeCode.value)form.elements.grade.value='';};
+scenarioUI=setupScenarios({getLibrary:()=>library,applyLibrary,message});
 setupPrintPlan({render});
 setupAudit({getState:()=>state,applyState:next=>{state=next;save();}});
 setupTranscriptImport({getState:()=>state,applyState:next=>{state=next;save();}});
