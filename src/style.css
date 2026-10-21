@@ -26,3 +26,24 @@
 .quick-move{display:grid;gap:5px;font-size:10px;margin:-4px 0 12px;color:#52654b}.quick-move select{width:100%;min-width:0;padding:6px;border:1px solid var(--line);border-radius:5px;background:white;font-size:10px}
 
 .requirement-filter{display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-size:12px;margin:18px 0}.requirement-filter select{padding:10px;border:1px solid var(--line);border-radius:6px;background:white;max-width:100%}#requirement-count{font-size:12px;line-height:1.7;color:#62735b}.requirement-result{display:grid;gap:8px;justify-items:end;text-align:right}.requirement-result button{font-size:11px;padding:6px 9px}
+
+.print-only{display:none}
+@media print{
+ @page{margin:14mm}
+ body{background:white;color:black;font-size:10pt}
+ aside,main>header,main>section:not(#plan),footer,#message,dialog,.plan-filters,.quick-move,.add-slot,#add,#prerequisite-checks,.legend label{display:none!important}
+ main{margin:0;padding:0;max-width:none}
+ #plan{padding:0}
+ #plan>.eyebrow,#plan>h1,#plan>.intro,#plan>.notice{display:none}
+ .print-only{display:block;margin-bottom:20px}
+ .print-only h1{font-size:22pt;letter-spacing:normal;margin:0 0 8px}
+ .print-only p{font-size:9pt;line-height:1.5}
+ .terms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .term{break-inside:avoid;page-break-inside:avoid;padding:12px;background:white;border:1px solid #777}
+ .course{color:black;background:white!important;border:1px solid #aaa;break-inside:avoid;cursor:default}
+ .stats{margin:15px 0;grid-template-columns:1fr 1fr 1fr}
+ .stats article{padding:12px;border-bottom:0}
+ .stats strong{font-size:18pt}
+ .section-heading h2{font-size:16pt}
+ .legend{margin:12px 0}
+}

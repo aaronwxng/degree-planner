@@ -32,6 +32,18 @@ try{
  }
  console.log(result);
  if(!result.startsWith('PASS')){console.error(errors.slice(-1200));process.exitCode=1;}
+ if(result.startsWith('PASS')){
+  const {targetId:printTarget}=await call('Target.createTarget',{url:`http://127.0.0.1:${server.address().port}/index.html`});
+  const {sessionId:printSession}=await call('Target.attachToTarget',{targetId:printTarget,flatten:true});
+  const printEvaluate=async expression=>{const value=await call('Runtime.evaluate',{expression,returnByValue:true},printSession);if(value.exceptionDetails)throw Error('Print browser evaluation failed.');return value.result?.value;};
+  for(let i=0;i<100&&!await printEvaluate('!!document.querySelector(".term")');i++)await sleep(100);
+  await call('Emulation.setEmulatedMedia',{media:'print'},printSession);
+  const printStyles=await printEvaluate(`getComputedStyle(document.querySelector('aside')).display==='none'&&getComputedStyle(document.querySelector('.print-only')).display==='block'&&getComputedStyle(document.querySelector('#requirements')).display==='none'&&getComputedStyle(document.querySelector('.course')).display!=='none'`);
+  if(!printStyles)throw Error('Print styles do not isolate the readable timeline.');
+  const pdf=await call('Page.printToPDF',{preferCSSPageSize:true,printBackground:true},printSession);
+  if(!pdf.data?.startsWith('JVBERi0')||pdf.data.length<1000)throw Error('Printing did not generate a PDF.');
+  console.log('PASS: print media hides controls, retains courses, and generates a PDF.');
+ }
  if(result.startsWith('PASS')&&process.argv[2]){
   // Optional private local PDF test: CDP sets a File input directly. The source
   // document is not copied into the checkout, served over HTTP, or logged.

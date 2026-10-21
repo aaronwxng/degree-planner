@@ -62,3 +62,7 @@ Next milestones: add a complete course catalog and prerequisites; verify minor c
 ### Prerequisite planning checks
 
 Open **Check course prerequisites** above the course filters for direct timing, grade, corequisite and antirequisite checks on 21 reviewed CS/Math/STAT courses. Courses outside coverage are marked **Not checked**; future prerequisites are conditional on passing. Each reviewed course links to its archived requirements. See [coverage, interpretation and limits](docs/prerequisite-checks.md).
+
+### Planning shortcuts and printing
+
+Planned courses have a **Move** selector for changing terms directly, with **Undo move** available until your next saved edit. Use the course requirement filter to focus on unfinished or unplanned course slots. **Print plan / PDF** opens the browser print dialog with the full timeline, including work terms; choose Save as PDF for a shareable copy. Printing restores your search/status/work-term filters afterward and does not change your saved courses. JSON export remains the editable backup format.
