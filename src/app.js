@@ -12,28 +12,32 @@ import {communication1,communication2,depthChains} from './elective-data.js';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let library=createScenarios(initialState()),state=initialState(),editing=null,undoRemoval=null,scenarioUI=null,storageLocked=false;
+let saveStatus={kind:'pending',text:'Starting suggestion. Save an edit or duplicate a plan to keep it in this browser.'};
+function updateSaveStatus(kind,text){saveStatus={kind,text};const node=$('#save-status');node.dataset.kind=kind;node.textContent=text;}
+function savedStatus(){updateSaveStatus('saved',`${activeScenario(library).name} saved in this browser at ${new Date().toLocaleTimeString()}.`);}
 function message(s){$('#message').textContent=s;}
-try{library=loadScenarios(localStorage,initialState());state=structuredClone(activeScenario(library).state);}catch{storageLocked=true;$('#export-recovery').hidden=false;message('Saved plans could not be loaded. Existing browser data has been left untouched. Download saved data for recovery. Edits here are temporary until a valid all-plans backup is imported.');}
+try{library=loadScenarios(localStorage,initialState());state=structuredClone(activeScenario(library).state);if(localStorage.getItem(scenarioKey)!==null||localStorage.getItem(legacyPlanKey)!==null)updateSaveStatus('saved',`Loaded ${activeScenario(library).name} from this browser.`);}catch{storageLocked=true;updateSaveStatus('error','Saved plans could not be loaded. Existing data is unchanged; use Download saved data for recovery.');$('#export-recovery').hidden=false;message('Saved plans could not be loaded. Existing browser data has been left untouched. Download saved data for recovery. Edits here are temporary until a valid all-plans backup is imported.');}
 function writeLibrary(next){if(storageLocked)throw Error('Saved plans are unavailable or changed in another tab. Export your work, then reload or import a valid all-plans backup.');return persistScenarios(localStorage,next);}
 function save(previous=null,undoLabel='Undo removal'){
  undoRemoval=previous;$('#undo-removal').hidden=!undoRemoval;$('#undo-removal').textContent=undoLabel;
  library=updateActiveScenario(library,state);
- try{library=writeLibrary(library);message(`${activeScenario(library).name} saved in this browser.`);}catch(err){message(`${err.message} Export your plans to keep the changes currently in memory.`);}
+ try{library=writeLibrary(library);savedStatus();message(`${activeScenario(library).name} saved in this browser.`);}catch(err){updateSaveStatus('error','Changes are not saved in this browser. Export all plans to keep your current work.');message(`${err.message} Export your plans to keep the changes currently in memory.`);}
  render();
 }
 function applyLibrary(next,allowRecovery=false){
  const validated=validateScenarios(next),switching=validated.activeId!==library.activeId;
- const stored=allowRecovery?persistScenarios(localStorage,validated):writeLibrary(validated);
+ let stored;try{stored=allowRecovery?persistScenarios(localStorage,validated):writeLibrary(validated);}catch(err){updateSaveStatus('error','The plan change could not be saved. Your previously saved plans are unchanged. Export all plans before reloading.');throw err;}
  library=stored;state=structuredClone(activeScenario(library).state);storageLocked=false;$('#export-recovery').hidden=true;
- undoRemoval=null;$('#undo-removal').hidden=true;
+ undoRemoval=null;$('#undo-removal').hidden=true;savedStatus();
  if(switching){$('#course-search').value='';$('#course-status').value='';$('#requirement-filter').value='all';}
  render();
 }
 window.addEventListener('storage',e=>{
- if(e.key===scenarioKey||e.key===null){storageLocked=true;$('#export-recovery').hidden=false;message('Saved plans changed in another tab. Export any work you want to keep, then reload to use the latest saved plans.');}
+ if(e.key===scenarioKey||e.key===null){storageLocked=true;updateSaveStatus('error','Another tab changed your saved plans. Export any current work before reloading.');$('#export-recovery').hidden=false;message('Saved plans changed in another tab. Export any work you want to keep, then reload to use the latest saved plans.');}
 });
 function render(){
  scenarioUI?.render();
+ updateSaveStatus(saveStatus.kind,saveStatus.text);
  renderPrerequisites(state);
  renderAudit(state);
  renderElectives(document,state.courses,state.ai);

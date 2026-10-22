@@ -217,6 +217,15 @@ try{
  frame.style.width='390px';await new Promise(r=>setTimeout(r,100));
  assert(doc.documentElement.scrollWidth<=frame.clientWidth+2,'Scenario controls and comparison fit a phone viewport');
  chooseScenario('main');
+ const beforeQuota=localStorage.getItem('waterloo-degree-scenarios-v1'),nativeSetItem=frame.contentWindow.Storage.prototype.setItem;
+ frame.contentWindow.Storage.prototype.setItem=function(key,value){if(key==='waterloo-degree-scenarios-v1')throw new DOMException('Storage full','QuotaExceededError');return nativeSetItem.call(this,key,value);};
+ doc.querySelector('#ai').click();
+ assert(doc.querySelector('#save-status').dataset.kind==='error'&&doc.querySelector('#save-status').textContent.includes('not saved'),'Storage failures remain visible beside the active plan');
+ assert(localStorage.getItem('waterloo-degree-scenarios-v1')===beforeQuota,'Failed saves preserve the previous saved library');
+ doc.querySelector('#course-search').value='CS';doc.querySelector('#course-search').dispatchEvent(new Event('input'));
+ assert(doc.querySelector('#save-status').dataset.kind==='error','Filtering does not dismiss an unsaved-work warning');
+ frame.contentWindow.Storage.prototype.setItem=nativeSetItem;doc.querySelector('#ai').click();doc.querySelector('#clear-filters').click();
+ assert(doc.querySelector('#save-status').dataset.kind==='saved','A successful save clears the unsaved-work warning');
  frame.style.width='390px';doc.querySelector('#open-transcript').click();
  assert(doc.querySelector('#transcript-dialog').getBoundingClientRect().width<=390,'Transcript dialog fits phone viewport');doc.querySelector('#close-transcript').click();
  results.textContent='PASS\n'+checks.join('\n');
