@@ -26,8 +26,14 @@ try{
  assert(prerequisites.querySelector('summary').textContent.includes('0 plan issues'),'Starter placement has no missing direct prerequisite courses');
  doc.querySelector('[data-edit="CS 350"]').click();doc.querySelector('#course-form').elements.term.value='1A';doc.querySelector('#course-form').requestSubmit();
  assert(prerequisites.open&&prerequisites.querySelector('.prerequisite-status.missing'),'Moving a course too early flags a prerequisite issue and preserves panel state');
+ const beforePrerequisiteFilter=localStorage.getItem('waterloo-degree-scenarios-v1');
+ doc.querySelector('#prerequisite-filter').focus();doc.querySelector('#prerequisite-filter').value='missing';doc.querySelector('#prerequisite-filter').dispatchEvent(new Event('change',{bubbles:true}));
+ assert(prerequisites.querySelectorAll('.prerequisite-row').length===1&&doc.activeElement.id==='prerequisite-filter','Prerequisite issue filter isolates CS 350 and retains keyboard focus');
+ assert(localStorage.getItem('waterloo-degree-scenarios-v1')===beforePrerequisiteFilter,'Prerequisite filtering does not alter saved scenarios');
  doc.querySelector('[data-edit="CS 350"]').click();doc.querySelector('#course-form').elements.term.value='3A';doc.querySelector('#course-form').requestSubmit();
  assert(!prerequisites.querySelector('.prerequisite-status.missing'),'Moving the course back clears the direct prerequisite issue');
+ assert(doc.querySelector('#prerequisite-filter').value==='missing'&&doc.querySelector('.prerequisite-empty'),'Prerequisite filter persists through edits and explains empty results');
+ doc.querySelector('#prerequisite-filter').value='all';doc.querySelector('#prerequisite-filter').dispatchEvent(new Event('change',{bubbles:true}));
  prerequisites.open=false;
  const beforeMove=localStorage.getItem('waterloo-degree-plan-v1');
  const move=doc.querySelector('[data-move="CS 350"]');move.value='1A';move.dispatchEvent(new Event('change',{bubbles:true}));
@@ -69,6 +75,9 @@ try{
  doc.querySelector('#clear-filters').click();assert(doc.querySelectorAll('.term').length>0,'Clear filters restores the timeline');
  add('SCI 206');
  assert(doc.querySelector('#prerequisite-checks .unreviewed'),'Courses outside reviewed coverage are explicitly not checked');
+ doc.querySelector('#prerequisite-filter').value='unreviewed';doc.querySelector('#prerequisite-filter').dispatchEvent(new Event('change',{bubbles:true}));
+ assert([...prerequisites.querySelectorAll('.prerequisite-status')].every(node=>node.classList.contains('unreviewed'))&&prerequisites.textContent.includes('SCI 206'),'Not checked filter exposes uncovered courses');
+ doc.querySelector('#prerequisite-filter').value='all';doc.querySelector('#prerequisite-filter').dispatchEvent(new Event('change',{bubbles:true}));
  const beforeRemoval=localStorage.getItem('waterloo-degree-plan-v1');
  doc.querySelector('[data-edit="SCI 206"]').click();doc.querySelector('#delete').click();
  assert(!doc.querySelector('[data-edit="SCI 206"]')&&!doc.querySelector('#undo-removal').hidden,'Deleting a course offers undo');
