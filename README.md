@@ -76,3 +76,7 @@ Open **Compare alternative plans** to compare eligible degree units, requirement
 Up to 12 named plans can be saved locally. **Export all plans** backs up every scenario and the active selection. The existing Import plan control accepts either a v1 single-plan file (replaces only the selected plan) or an all-plans backup (replaces the library after confirmation). Single-plan exports remain v1-compatible. Printing includes the selected plan's name.
 
 All plans live in this browser; clearing browser data removes them. If another tab changes saved scenarios, export any in-memory work before reloading to avoid overwriting the other tab. Invalid stored libraries are left untouched and can be downloaded for recovery. See [scenario storage and backup behavior](docs/alternative-plans.md).
+
+### Finding courses and reviewing issues
+
+The saved-plan controls show whether the current work is saved locally; storage failures and changes from another tab leave a visible warning. Use **Export all plans** to preserve in-memory work before reloading if saving is unavailable. Course requirement rows offer **Find in plan**, which reveals and focuses the matched course card. In **Check course prerequisites**, filter for plan issues, review items, uncovered courses, planned prerequisites or recorded prerequisites. These filters change only the view; summary counts still describe the full plan.
